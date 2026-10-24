@@ -162,13 +162,11 @@ button.role-chip:hover { transform: rotate(2deg) scale(1.05); }
 .tab--active { padding-top: 13px; padding-bottom: 17px; font-family: var(--hand); font-weight: 700; font-size: 21px; opacity: 1; z-index: 2; }
 .tab--add { font-size: 22px; padding: 6px 12px 14px; background: rgba(252, 251, 248, 0.7); color: var(--ink); }
 .tab--form input { font: 700 20px var(--hand); border: 0; background: transparent; width: 9em; color: var(--print); outline: none; }
-.tab-wrap { display: flex; align-items: flex-end; gap: 4px; }
-.tab-wrap .tab { transform: none; }
-.tab-tools { display: flex; gap: 2px; margin-bottom: 16px; background: rgba(252, 251, 248, 0.92); border-radius: 8px; padding: 2px; box-shadow: 0 2px 6px rgba(40, 32, 22, 0.15); }
-.tab-tools button { border: 0; background: none; cursor: pointer; padding: 3px 7px; border-radius: 6px; font: 15px var(--note); color: var(--ink); }
-.tab-tools button:hover:not(:disabled) { background: rgba(51, 53, 140, 0.1); }
-.tab-tools button:disabled { opacity: 0.35; cursor: default; }
-.tab-tools .tab-tools-danger { color: var(--danger); }
+.tab--tools { display: inline-flex; align-items: center; gap: 2px; cursor: default; }
+.tab-title { border: 0; background: none; padding: 0 4px 0 0; font: inherit; color: inherit; cursor: text; }
+.tab-icon { border: 0; background: none; cursor: pointer; padding: 2px 5px; border-radius: 6px; font: 16px/1 var(--note); color: var(--print-soft); }
+.tab-icon:hover { background: rgba(58, 53, 44, 0.1); color: var(--print); }
+.tab-icon--danger, .tab-icon--danger:hover { color: var(--danger); font-size: 15px; }
 
 /* ---------- empty / overflow notes ---------- */
 .empty-note {

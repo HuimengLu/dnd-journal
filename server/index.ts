@@ -5,6 +5,7 @@ import { existsSync, readFileSync, writeFileSync, unlinkSync, renameSync } from 
 import { join, extname } from 'node:path';
 import * as db from './db.ts';
 import { extractCharacterFields } from './pdf.ts';
+import { aiAvailable, extractWithClaude } from './aiExtract.ts';
 import { renderPdfPages } from './pdfRender.ts';
 import { validateCharacter, ValidationError } from './validate.ts';
 import { type CampaignState, type Role } from '../shared/types.ts';
@@ -157,29 +158,54 @@ async function storeSheetPages(pdfBytes: Uint8Array, originalName: string): Prom
   }
 }
 
+/** Stores an uploaded sheet image as-is so it shows under 原始角色卡. */
+function storeSheetImage(f: Express.Multer.File, mime: string): string {
+  return db.insertAsset({ storedName: f.filename, originalName: f.originalname.slice(0, 120), mime, size: f.size, width: null, height: null }).id;
+}
+
+const SCAN_HINT = aiAvailable()
+  ? 'AI 也没能读出这张角色卡，可以改用手动创建'
+  : '这份角色卡是图片，没有可读取的表单字段。要自动识别，需要在服务器环境变量里设置 ANTHROPIC_API_KEY；也可以改用手动创建';
+
 app.post('/api/import/pdf', upload.single('file'), async (req, res) => {
   const f = req.file;
   if (!f) return res.status(400).json({ error: '没有收到文件' });
-  if (sniff(f.path) !== 'application/pdf') {
+  const mime = sniff(f.path);
+  if (mime !== 'application/pdf' && !(mime && IMAGE_TYPES.includes(mime))) {
     discard(f);
-    return res.status(415).json({ error: '这不是 PDF 文件' });
+    return res.status(415).json({ error: '请上传 PDF 或图片（JPEG、PNG、WebP）格式的角色卡' });
   }
   try {
     const bytes = new Uint8Array(readFileSync(f.path));
-    const { fields, missing } = await extractCharacterFields(bytes);
-    fields.sheetPageAssetIds = await storeSheetPages(bytes, f.originalname.slice(0, 80));
-    const stored = `${randomUUID()}.pdf`;
-    renameSync(f.path, join(db.UPLOAD_DIR, stored));
-    const asset = db.insertAsset({ storedName: stored, originalName: f.originalname.slice(0, 120), mime: 'application/pdf', size: f.size, width: null, height: null });
-    fields.pdfAssetId = asset.id;
+    let result: Awaited<ReturnType<typeof extractCharacterFields>> | null = null;
+    if (mime === 'application/pdf') {
+      try { result = await extractCharacterFields(bytes); }
+      catch (e) { if (!(e instanceof Error && e.message === 'NO_FORM_FIELDS')) throw e; }
+    }
+    // no form fields (scanned / image-only sheet): let Claude read the page
+    if (!result) {
+      if (!aiAvailable()) throw new Error('SCAN');
+      try { result = await extractWithClaude(bytes, mime); }
+      catch (e) { console.error('AI sheet read failed:', e); throw new Error('SCAN'); }
+    }
+    const { fields, missing } = result;
+    let pdfAssetId: string | null = null;
+    if (mime === 'application/pdf') {
+      fields.sheetPageAssetIds = await storeSheetPages(bytes, f.originalname.slice(0, 80));
+      const stored = `${randomUUID()}.pdf`;
+      renameSync(f.path, join(db.UPLOAD_DIR, stored));
+      pdfAssetId = db.insertAsset({ storedName: stored, originalName: f.originalname.slice(0, 120), mime, size: f.size, width: null, height: null }).id;
+    } else {
+      fields.sheetPageAssetIds = [storeSheetImage(f, mime)];
+    }
+    fields.pdfAssetId = pdfAssetId;
+    if (fields.sheetPageAssetIds.length) broadcast('assets');
     const dup = fields.name ? db.findCharacterByName(fields.name) : null;
-    res.json({ pdfAssetId: asset.id, fields, missing, sameNameCharacterId: dup?.id ?? null });
+    res.json({ pdfAssetId, fields, missing, sameNameCharacterId: dup?.id ?? null });
   } catch (e) {
     discard(f);
-    const noFields = e instanceof Error && e.message === 'NO_FORM_FIELDS';
-    res.status(422).json({
-      error: noFields ? '这份 PDF 没有可读取的表单字段，可以改用手动创建' : 'PDF 无法读取，可能已损坏或加密，可以改用手动创建',
-    });
+    const scan = e instanceof Error && e.message === 'SCAN';
+    res.status(422).json({ error: scan ? SCAN_HINT : 'PDF 无法读取，可能已损坏或加密，可以改用手动创建' });
   }
 });
 

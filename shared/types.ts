@@ -154,7 +154,8 @@ export interface CampaignState {
 }
 
 export interface PdfImportResult {
-  pdfAssetId: string;
+  /** Null when the sheet was uploaded as an image. */
+  pdfAssetId: string | null;
   fields: CharacterInput;
   /** Field names the parser could not fill; shown so the DM checks them. */
   missing: string[];

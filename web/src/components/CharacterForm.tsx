@@ -58,7 +58,7 @@ export function CharacterForm({ initial, missing = [], submitLabel, onSubmit, on
 
   return (
     <form className="cform" onSubmit={submit} noValidate>
-      {missing.length > 0 && <p className="form-hint">标黄的字段没能从 PDF 里读出来，请检查后再保存。</p>}
+      {missing.length > 0 && <p className="form-hint">标黄的字段没能从角色卡里读出来，请检查后再保存。</p>}
 
       <div className="cform-portrait">
         <div className="cform-portrait-preview">{v.portraitAssetId ? <img src={assetUrl(v.portraitAssetId)} alt="头像预览" /> : <span>无头像</span>}</div>
