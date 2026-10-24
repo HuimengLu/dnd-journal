@@ -333,8 +333,9 @@ async function backfillSheetPages() {
 setTimeout(() => { backfillSheetPages().catch((e) => console.error('backfill failed:', e)); }, 500);
 
 app.listen(PORT, () => {
-  const webPort = PROD ? PORT : 5173;
-  console.log(`\nCampaign Journal API on http://localhost:${PORT}`);
-  console.log(`  DM link:     http://localhost:${webPort}/?key=${keys.dm}`);
-  console.log(`  Player link: http://localhost:${webPort}/?key=${keys.player}\n`);
+  // PUBLIC_URL (e.g. https://your-app.up.railway.app) makes the printed links usable as-is once deployed
+  const base = (process.env.PUBLIC_URL ?? `http://localhost:${PROD ? PORT : 5173}`).replace(/\/$/, '');
+  console.log(`\nCampaign Journal API on port ${PORT}`);
+  console.log(`  DM link:     ${base}/?key=${keys.dm}`);
+  console.log(`  Player link: ${base}/?key=${keys.player}\n`);
 });

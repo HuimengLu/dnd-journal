@@ -25,6 +25,18 @@ npm run build
 PORT=8787 npm start
 ```
 
+## Deploy (Railway)
+
+The app needs a long-running Node server and a persistent disk (SQLite database, uploads, link keys), so static hosts such as Vercel won't work.
+
+1. On railway.com: New Project → Deploy from GitHub repo → this repository.
+2. In the service: add a Volume mounted at `/data`.
+3. Variables: `DATA_DIR=/data`, and after step 4, `PUBLIC_URL=https://<your-domain>`.
+4. Settings → Networking → Generate Domain.
+5. Redeploy, then read the DM and player links from the deploy logs.
+
+`railway.json` sets the build (`npm run build`) and start (`npm start`) commands; Railway provides `PORT`.
+
 ## What's in the MVP
 
 - **Character overview**: cards from Figma 19:144. Six hearts always; they empty in half-heart steps by current/max HP, and turn red at ≤ ⅓ HP (Figma 19:241). Click the number under the hearts (or the HP bar) to set HP exactly. The DM can drag cards anywhere on the spread (positions are shared).
