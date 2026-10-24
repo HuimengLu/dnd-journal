@@ -70,5 +70,6 @@ export function validateCharacter(body: Record<string, unknown>, assetExists: (i
     attacks,
     potions: int(body.potions ?? 0, 'potions', '药水数量', 0, 99),
     pdfAssetId: assetRef(body.pdfAssetId, 'pdfAssetId'),
+    sheetPageAssetIds: (Array.isArray(body.sheetPageAssetIds) ? body.sheetPageAssetIds : []).map(String).filter(assetExists).slice(0, 6),
   };
 }

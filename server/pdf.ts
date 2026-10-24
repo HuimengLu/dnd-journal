@@ -43,8 +43,10 @@ export async function extractCharacterFields(bytes: Uint8Array): Promise<{ field
   else missing.push('level');
   out.className = classLevel
     .replace(/\b(lv|lvl|level)\.?\s*\d+/gi, '')
-    .replace(/\d+/g, '')
+    .replace(/(等级\s*)?\d+\s*级?/g, '')
+    .replace(/\s*[-–—]\s*/g, ' · ')
     .replace(/\s{2,}/g, ' ')
+    .replace(/^[\s·]+|[\s·]+$/g, '')
     .trim();
   if (!out.className) missing.push('className');
 
@@ -71,15 +73,20 @@ export async function extractCharacterFields(bytes: Uint8Array): Promise<{ field
   }
 
   const attacks: Attack[] = [];
-  const weaponRows: [string, string][] = [
-    ['Wpn Name', 'Wpn1 AtkBonus'],
-    ['Wpn Name 2', 'Wpn2 AtkBonus'],
-    ['Wpn Name 3', 'Wpn3 AtkBonus'],
+  const weaponRows: [string, string, string][] = [
+    ['Wpn Name', 'Wpn1 AtkBonus', 'Wpn1 Damage'],
+    ['Wpn Name 2', 'Wpn2 AtkBonus', 'Wpn2 Damage'],
+    ['Wpn Name 3', 'Wpn3 AtkBonus', 'Wpn3 Damage'],
   ];
-  for (const [nameKey, bonusKey] of weaponRows) {
+  for (const [nameKey, bonusKey, damageKey] of weaponRows) {
     const name = get(nameKey);
     if (!name) continue;
-    attacks.push({ name: shortName(name), badge: get(bonusKey).replace(/\s+/g, '') || '—', icon: guessIcon(name) });
+    const badge = get(bonusKey).replace(/\s+/g, '') || '—';
+    const damage = get(damageKey).replace(/\s+/g, ' ').trim();
+    attacks.push({
+      name: shortName(name), badge, icon: guessIcon(name),
+      ...(damage ? { summary: `命中 ${badge}，伤害 ${damage}`.slice(0, 40) } : {}),
+    });
   }
   out.attacks = attacks.slice(0, 3);
 
@@ -136,8 +143,9 @@ function guessIcon(name: string): AttackIcon {
   const n = name.toLowerCase();
   if (/dagger|knife|匕首|短刀/.test(n)) return 'dagger';
   if (/bow|crossbow|弓|弩/.test(n)) return 'bow';
-  if (/sword|rapier|blade|scimitar|axe|剑|刀|斧/.test(n)) return 'sword';
-  if (/fist|unarmed|punch|拳/.test(n)) return 'fist';
+  if (/axe|hatchet|斧/.test(n)) return 'axe';
+  if (/sword|rapier|blade|scimitar|剑|刀/.test(n)) return 'sword';
+  if (/fist|unarmed|punch|拳|徒手/.test(n)) return 'fist';
   if (/fire|flame|bolt|火|焰/.test(n)) return 'flame';
   if (/mock|嘲/.test(n)) return 'mockery';
   if (/whisper|song|lute|琴|歌|低语/.test(n)) return 'whispers';

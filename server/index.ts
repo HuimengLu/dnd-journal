@@ -5,6 +5,7 @@ import { existsSync, readFileSync, writeFileSync, unlinkSync, renameSync } from 
 import { join, extname } from 'node:path';
 import * as db from './db.ts';
 import { extractCharacterFields } from './pdf.ts';
+import { renderPdfPages } from './pdfRender.ts';
 import { validateCharacter, ValidationError } from './validate.ts';
 import { PLAYER_EDITABLE_FIELDS, type CampaignState, type Role } from '../shared/types.ts';
 import { parseExpression } from '../shared/dice.ts';
@@ -102,7 +103,9 @@ app.patch('/api/characters/:id', (req, res) => {
 });
 
 app.delete('/api/characters/:id', dmOnly, (req, res) => {
+  const c = db.getCharacter(req.params.id);
   db.deleteCharacter(req.params.id);
+  if (c) [c.portraitAssetId, c.pdfAssetId, ...c.sheetPageAssetIds].filter((x): x is string => !!x).forEach(removeAssetIfUnused);
   broadcast('characters');
   res.status(204).end();
 });
@@ -141,6 +144,21 @@ app.post('/api/assets', dmOnly, upload.single('file'), (req, res) => {
   res.status(201).json(asset);
 });
 
+/** Renders a stored PDF to page images (WebP assets). Failures leave the character without images. */
+async function storeSheetPages(pdfBytes: Uint8Array, originalName: string): Promise<string[]> {
+  try {
+    const pages = await renderPdfPages(pdfBytes);
+    return pages.map((buf, i) => {
+      const stored = `${randomUUID()}.webp`;
+      writeFileSync(join(db.UPLOAD_DIR, stored), buf);
+      return db.insertAsset({ storedName: stored, originalName: `${originalName} · 第 ${i + 1} 页`, mime: 'image/webp', size: buf.length, width: null, height: null }).id;
+    });
+  } catch (e) {
+    console.error('sheet render failed:', e);
+    return [];
+  }
+}
+
 app.post('/api/import/pdf', dmOnly, upload.single('file'), async (req, res) => {
   const f = req.file;
   if (!f) return res.status(400).json({ error: '没有收到文件' });
@@ -149,7 +167,9 @@ app.post('/api/import/pdf', dmOnly, upload.single('file'), async (req, res) => {
     return res.status(415).json({ error: '这不是 PDF 文件' });
   }
   try {
-    const { fields, missing } = await extractCharacterFields(new Uint8Array(readFileSync(f.path)));
+    const bytes = new Uint8Array(readFileSync(f.path));
+    const { fields, missing } = await extractCharacterFields(bytes);
+    fields.sheetPageAssetIds = await storeSheetPages(bytes, f.originalname.slice(0, 80));
     const stored = `${randomUUID()}.pdf`;
     renameSync(f.path, join(db.UPLOAD_DIR, stored));
     const asset = db.insertAsset({ storedName: stored, originalName: f.originalname.slice(0, 120), mime: 'application/pdf', size: f.size, width: null, height: null });
@@ -175,7 +195,7 @@ app.get('/api/assets/:id', (req, res) => {
 
 function removeAssetIfUnused(id: string) {
   if (db.countImageRefs(id) > 0) return;
-  if (db.listCharacters().some((c) => c.portraitAssetId === id || c.pdfAssetId === id)) return;
+  if (db.listCharacters().some((c) => c.portraitAssetId === id || c.pdfAssetId === id || c.sheetPageAssetIds.includes(id))) return;
   const row = db.deleteAssetRow(id);
   if (row) { const p = join(db.UPLOAD_DIR, row.stored_name); if (existsSync(p)) unlinkSync(p); }
 }
@@ -295,6 +315,23 @@ if (PROD) {
 
 db.getCampaign();
 db.overviewPageId();
+
+/** Characters imported before sheet images existed get them generated once, in the background. */
+async function backfillSheetPages() {
+  for (const c of db.listCharacters()) {
+    if (!c.pdfAssetId || c.sheetPageAssetIds.length) continue;
+    const pdf = db.getAssetRow(c.pdfAssetId);
+    const path = pdf && join(db.UPLOAD_DIR, pdf.stored_name);
+    if (!path || !existsSync(path)) continue;
+    const ids = await storeSheetPages(new Uint8Array(readFileSync(path)), pdf.original_name);
+    if (!ids.length) continue;
+    const { id: _i, createdAt: _c, updatedAt: _u, ...input } = c;
+    db.updateCharacter(c.id, { ...input, sheetPageAssetIds: ids });
+    broadcast('characters');
+  }
+}
+setTimeout(() => { backfillSheetPages().catch((e) => console.error('backfill failed:', e)); }, 500);
+
 app.listen(PORT, () => {
   const webPort = PROD ? PORT : 5173;
   console.log(`\nCampaign Journal API on http://localhost:${PORT}`);

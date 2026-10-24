@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { createPortal } from 'react-dom';
 import type { Character, OverviewPosition, Role, SlotInfo } from '../../../shared/types.ts';
 import { api } from '../api.ts';
 import { CARD_H, CARD_W, CharacterCard } from './CharacterCard.tsx';
@@ -48,6 +49,30 @@ export function OverviewPage({ characters, positions, role, onOpen, onEditHp, on
   const drag = useRef<Drag | null>(null);
   const [draft, setDraft] = useState<Record<string, { x: number; y: number }>>({});
   const [lifted, setLifted] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<Character | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // clicking anywhere that is not a card (or the confirm dialog) clears the selection
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => { if (!(e.target as HTMLElement).closest?.('.card-slot, .confirm')) setSelected(null); };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, []);
+
+  const remove = async (c: Character) => {
+    setDeleting(true);
+    try {
+      await api.deleteCharacter(c.id);
+      toast({ tone: 'info', message: `已删除 ${c.name}` });
+      setConfirming(null);
+      setSelected(null);
+    } catch (err) {
+      toast({ tone: 'error', message: err instanceof Error ? err.message : '删除失败' });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // forget drafts once the saved position matches
   useEffect(() => {
@@ -81,7 +106,7 @@ export function OverviewPage({ characters, positions, role, onOpen, onEditHp, on
 
   const begin = (e: ReactPointerEvent, c: Character, i: number) => {
     if (!isDm || e.button !== 0) return;
-    if ((e.target as HTMLElement).closest('.cc-hp-value--edit, .cc-bar, .cc-quick')) return; // quick edits, not dragging
+    if ((e.target as HTMLElement).closest('.cc-hp-value--edit, .cc-bar, .cc-quick, .card-delete')) return; // quick edits, not dragging
     drag.current = { id: c.id, startX: e.clientX, startY: e.clientY, from: pos(c, i), moved: false };
   };
   const move = (e: ReactPointerEvent) => {
@@ -101,7 +126,7 @@ export function OverviewPage({ characters, positions, role, onOpen, onEditHp, on
     drag.current = null;
     setLifted(null);
     if (!d) return;
-    if (!d.moved) return; // a plain click is for quick edits; details open on double-click
+    if (!d.moved) { setSelected(c.id); return; } // a plain click selects (and does quick edits); details open on double-click
     const p = d.last; // state may lag a render behind the last pointer move
     if (!p) return;
     try {
@@ -119,7 +144,7 @@ export function OverviewPage({ characters, positions, role, onOpen, onEditHp, on
         return (
           <div
             key={c.id}
-            className={`card-slot${lifted === c.id ? ' card-slot--lifted' : ''}`}
+            className={`card-slot${lifted === c.id ? ' card-slot--lifted' : ''}${isDm && selected === c.id ? ' card-slot--selected' : ''}`}
             style={{ left: p.x, top: p.y, width: CARD_W, height: CARD_H, zIndex: z(c), transform: `scale(${L.scale}) rotate(${TILT[i % TILT.length]}deg)` }}
             onPointerDown={(e) => begin(e, c, i)}
             onPointerMove={move}
@@ -132,9 +157,27 @@ export function OverviewPage({ characters, positions, role, onOpen, onEditHp, on
             {/* DM: drag to move, double-click for details; players: double-click the card */}
             <CharacterCard character={c} onOpen={isDm ? undefined : () => onOpen(c.id)} onEditHp={(a) => onEditHp(c.id, a)} canEditHp
               onQuickEdit={isDm ? (f, a) => onQuickEdit(c.id, f, a) : undefined} onSlotHover={lifted ? undefined : onSlotHover} onSlotOpen={onSlotOpen} />
+            {isDm && selected === c.id && !lifted && (
+              <button type="button" className="card-delete" onClick={(e) => { e.stopPropagation(); setConfirming(c); }} aria-label={`删除 ${c.name}`} title="删除角色卡">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.8l11 10.6M17.3 6.4L6.8 17.5" /></svg>
+              </button>
+            )}
           </div>
         );
       })}
+      {confirming && createPortal(
+        <div className="confirm-veil" onPointerDown={(e) => { if (e.target === e.currentTarget && !deleting) setConfirming(null); }}>
+          <div className="confirm" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-body">
+            <p id="confirm-title" className="confirm-title">删除这张角色卡？</p>
+            <p id="confirm-body" className="confirm-body">会删除「{confirming.name}」，并把它从所有页面上移除。这一步不能撤销。</p>
+            <div className="confirm-actions">
+              <button type="button" className="btn btn--ghost" autoFocus onClick={() => setConfirming(null)} disabled={deleting}>取消</button>
+              <button type="button" className="btn btn--danger" onClick={() => remove(confirming)} disabled={deleting}>{deleting ? '删除中…' : '删除'}</button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }

@@ -8,7 +8,7 @@ export const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const;
 export type Ability = (typeof ABILITIES)[number];
 export type AbilityScores = Record<Ability, number>;
 
-export const ATTACK_ICONS = ['dagger', 'sword', 'bow', 'flame', 'fist', 'mockery', 'whispers', 'sparkle'] as const;
+export const ATTACK_ICONS = ['dagger', 'sword', 'axe', 'bow', 'flame', 'fist', 'mockery', 'whispers', 'sparkle'] as const;
 export type AttackIcon = (typeof ATTACK_ICONS)[number];
 
 export interface Attack {
@@ -88,6 +88,8 @@ export interface Character {
   attacks: Attack[];
   potions: number;
   pdfAssetId: string | null;
+  /** The original sheet rendered to images, one per page (server-generated from the PDF). */
+  sheetPageAssetIds: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -193,5 +195,6 @@ export function emptyCharacterInput(): CharacterInput {
     attacks: [],
     potions: 0,
     pdfAssetId: null,
+    sheetPageAssetIds: [],
   };
 }

@@ -3,16 +3,18 @@ import dagger from './assets/figma/icon-dagger.svg';
 import mockery from './assets/figma/icon-mockery.svg';
 import whispers from './assets/figma/icon-whispers.svg';
 import sword from './assets/icons/icon-sword.svg';
+import axe from './assets/icons/icon-axe.svg';
 import bow from './assets/icons/icon-bow.svg';
 import flame from './assets/icons/icon-flame.svg';
 import fist from './assets/icons/icon-fist.svg';
 import sparkle from './assets/icons/icon-sparkle.svg';
 
-const ICONS: Record<AttackIcon, string> = { dagger, sword, bow, flame, fist, mockery, whispers, sparkle };
+const ICONS: Record<AttackIcon, string> = { dagger, sword, axe, bow, flame, fist, mockery, whispers, sparkle };
 
 export const ICON_LABELS: Record<AttackIcon, string> = {
   dagger: '匕首',
   sword: '刀剑',
+  axe: '斧头',
   bow: '弓弩',
   flame: '火焰法术',
   fist: '徒手',

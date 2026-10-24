@@ -170,13 +170,6 @@ export function DetailPanel({ character: c, role, onClose, onUpdate, onDeleted }
               )}
             </Row>
 
-            <Row label="ORIGINAL SHEET" sub="原始角色卡">
-              {c.pdfAssetId ? (
-                <a className="detail-link" href={assetUrl(c.pdfAssetId)} target="_blank" rel="noreferrer">打开 PDF ↗</a>
-              ) : (
-                <p className="detail-muted">这个角色是手动创建的，没有 PDF。</p>
-              )}
-            </Row>
 
             {isDm && (
               <footer className="detail-actions">
@@ -192,6 +185,24 @@ export function DetailPanel({ character: c, role, onClose, onUpdate, onDeleted }
                 )}
               </footer>
             )}
+
+            <section className="detail-sheet" aria-label="原始角色卡">
+              <div className="detail-sheet-head">
+                <div className="detail-label"><span>ORIGINAL SHEET</span><small>原始角色卡</small></div>
+                {c.pdfAssetId && <a className="detail-link" href={assetUrl(c.pdfAssetId)} target="_blank" rel="noreferrer">打开 PDF ↗</a>}
+              </div>
+              {c.sheetPageAssetIds.length > 0 ? (
+                <div className="detail-sheet-pages">
+                  {c.sheetPageAssetIds.map((id, i) => (
+                    <a key={id} href={assetUrl(id)} target="_blank" rel="noreferrer" title="打开原图">
+                      <img src={assetUrl(id)} alt={`${c.name} 的角色卡第 ${i + 1} 页`} loading="lazy" />
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <p className="detail-muted">{c.pdfAssetId ? '正在把 PDF 转成图片，稍等片刻会出现在这里。' : '这个角色是手动创建的，没有 PDF。'}</p>
+              )}
+            </section>
           </div>
         )}
       </article>

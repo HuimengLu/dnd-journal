@@ -59,7 +59,11 @@ export function overviewPageId(): string {
 
 // ---------- characters ----------
 type CharRow = { id: string; data: string; created_at: string; updated_at: string };
-const toCharacter = (r: CharRow): Character => ({ ...(JSON.parse(r.data) as CharacterInput), id: r.id, createdAt: r.created_at, updatedAt: r.updated_at });
+const toCharacter = (r: CharRow): Character => {
+  const data = JSON.parse(r.data) as Partial<CharacterInput>;
+  // rows saved before sheet images existed have no sheetPageAssetIds
+  return { ...(data as CharacterInput), sheetPageAssetIds: data.sheetPageAssetIds ?? [], id: r.id, createdAt: r.created_at, updatedAt: r.updated_at };
+};
 
 export function listCharacters(): Character[] {
   return (db.prepare('SELECT * FROM characters ORDER BY created_at').all() as CharRow[]).map(toCharacter);
