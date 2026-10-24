@@ -11,6 +11,8 @@ const ROLLER_STORAGE = 'campaign-journal-roller';
 
 interface Props {
   role: Role;
+  /** Who the viewer says they are (DM / 玩家): the default name on their dice rolls. */
+  identity: Role;
   rolls: DiceRoll[];
   onAddCharacter: () => void;
   onPlaceSticker: (s: Sticker) => void;
@@ -21,7 +23,7 @@ interface Props {
 }
 
 /** Floating tool panel on the left of the journal: add character (DM), dice, stickers (DM). */
-export function Toolbar({ role, rolls, onAddCharacter, onPlaceSticker, onAddImage, onRolled }: Props) {
+export function Toolbar({ role, identity, rolls, onAddCharacter, onPlaceSticker, onAddImage, onRolled }: Props) {
   const fileInput = useRef<HTMLInputElement>(null);
   const isDm = role === 'dm';
   const [tool, setTool] = useState<Tool>(null);
@@ -85,7 +87,7 @@ export function Toolbar({ role, rolls, onAddCharacter, onPlaceSticker, onAddImag
       {tool && createPortal(
         <div ref={panel} className="tool-panel" style={panelPos} role="dialog" aria-label={tool === 'dice' ? '掷骰子' : '贴纸'}>
           {tool === 'dice' ? (
-            <DiceTray role={role} rolls={rolls} onRolled={onRolled} onClose={() => setTool(null)} />
+            <DiceTray role={identity} rolls={rolls} onRolled={onRolled} onClose={() => setTool(null)} />
           ) : (
             <StickerDrawer onPick={onPlaceSticker} onClose={() => setTool(null)} />
           )}

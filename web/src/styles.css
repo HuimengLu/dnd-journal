@@ -84,6 +84,8 @@ input, select, textarea { font-family: inherit; }
 .topbar-actions { display: flex; align-items: center; gap: 8px; }
 .role-chip { font: 700 15px/1 var(--hand); padding: 4px 10px; border-radius: 6px; border: 2px solid var(--ink); color: var(--ink); background: var(--card-paper); transform: rotate(-2deg); }
 .role-chip--dm { background: var(--ink); color: var(--card-paper); }
+button.role-chip { cursor: pointer; transition: transform 0.15s ease; }
+button.role-chip:hover { transform: rotate(2deg) scale(1.05); }
 .sync { font: 14px var(--note); color: var(--print-soft); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 @media (max-width: 900px) { .sync { font-size: 0; gap: 0; } .topbar { padding: 0 12px; } .topbar-actions .btn { padding: 6px 10px; font-size: 15px; } }
 .sync::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #5d9a6b; }

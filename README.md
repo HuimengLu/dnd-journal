@@ -13,10 +13,9 @@ npm run dev
 
 The server prints two private links on start:
 
-- **DM link**: full control (add characters, import PDFs, arrange pages, upload images).
-- **Player link**: view everything live and edit HP (current and temporary).
+- **DM link** and **Player link** have the same permissions: anyone at the table can add characters, import PDFs, edit stats, arrange pages, upload images and place stickers.
 
-The DM can also copy the player link with "邀请玩家" in the top bar. Keys live in `data/keys.json`; delete that file and restart to rotate both links.
+The "DM / 玩家" chip in the top bar is a per-viewer label (click to switch); it only changes the default name on dice rolls. Anyone can copy the player link with "邀请玩家". Keys live in `data/keys.json`; delete that file and restart to rotate both links.
 
 For a session with friends, build once and run a single server, then expose that port (for example with a tunnel or a small VPS):
 

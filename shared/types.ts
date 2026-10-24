@@ -97,9 +97,6 @@ export interface Character {
 /** Fields a client may send when creating or editing a character. */
 export type CharacterInput = Omit<Character, 'id' | 'createdAt' | 'updatedAt'>;
 
-/** Players may only change these; everything else is DM-only. */
-export const PLAYER_EDITABLE_FIELDS = ['hpCurrent', 'hpTemp'] as const;
-
 export interface JournalPage {
   id: string;
   title: string;

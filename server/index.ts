@@ -7,7 +7,7 @@ import * as db from './db.ts';
 import { extractCharacterFields } from './pdf.ts';
 import { renderPdfPages } from './pdfRender.ts';
 import { validateCharacter, ValidationError } from './validate.ts';
-import { PLAYER_EDITABLE_FIELDS, type CampaignState, type Role } from '../shared/types.ts';
+import { type CampaignState, type Role } from '../shared/types.ts';
 import { parseExpression } from '../shared/dice.ts';
 import { randomInt } from 'node:crypto';
 import stickers from '../web/src/assets/stickers/stickers.json' with { type: 'json' };
@@ -16,7 +16,7 @@ const PROD = process.env.NODE_ENV === 'production';
 // In development the API sits behind Vite's proxy on its own port; PORT is only honoured in production.
 const PORT = Number(process.env.API_PORT ?? (PROD ? process.env.PORT : undefined) ?? 8787);
 
-// ---------- private links: one key for the DM, one for players ----------
+// ---------- private links: two keys (DM, players) with the same permissions; the role is just a label ----------
 const KEYS_FILE = join(db.DATA_DIR, 'keys.json');
 type Keys = { dm: string; player: string };
 const keys: Keys = existsSync(KEYS_FILE)
@@ -48,8 +48,6 @@ const auth = (req: Request, res: Response, next: NextFunction) => {
   req.role = role;
   next();
 };
-const dmOnly = (req: Request, res: Response, next: NextFunction) =>
-  req.role === 'dm' ? next() : res.status(403).json({ error: '只有 DM 可以做这个操作' });
 
 app.use('/api', auth);
 
@@ -74,13 +72,13 @@ function state(): CampaignState {
 }
 app.get('/api/session', (req, res) => res.json({ role: req.role, campaign: db.getCampaign() }));
 app.get('/api/state', (_req, res) => res.json(state()));
-/** Lets the DM copy the player link from the app instead of the server console. */
-app.get('/api/links', dmOnly, (_req, res) => res.json({ playerKey: keys.player }));
+/** "邀请玩家": lets anyone at the table copy the player link from the app. */
+app.get('/api/links', (_req, res) => res.json({ playerKey: keys.player }));
 
 // ---------- characters ----------
 const assetExists = (id: string) => db.getAssetRow(id) !== null;
 
-app.post('/api/characters', dmOnly, (req, res) => {
+app.post('/api/characters', (req, res) => {
   const input = validateCharacter(req.body ?? {}, assetExists);
   const c = db.insertCharacter(input);
   broadcast('characters');
@@ -91,10 +89,6 @@ app.patch('/api/characters/:id', (req, res) => {
   const cur = db.getCharacter(req.params.id);
   if (!cur) return res.status(404).json({ error: '找不到这个角色' });
   const body = (req.body ?? {}) as Record<string, unknown>;
-  if (req.role !== 'dm') {
-    const extra = Object.keys(body).filter((k) => !(PLAYER_EDITABLE_FIELDS as readonly string[]).includes(k));
-    if (extra.length) return res.status(403).json({ error: '玩家只能修改生命值' });
-  }
   const { id: _i, createdAt: _c, updatedAt: _u, ...base } = cur;
   const input = validateCharacter({ ...base, ...body }, assetExists);
   const c = db.updateCharacter(cur.id, input);
@@ -102,7 +96,7 @@ app.patch('/api/characters/:id', (req, res) => {
   res.json(c);
 });
 
-app.delete('/api/characters/:id', dmOnly, (req, res) => {
+app.delete('/api/characters/:id', (req, res) => {
   const c = db.getCharacter(req.params.id);
   db.deleteCharacter(req.params.id);
   if (c) [c.portraitAssetId, c.pdfAssetId, ...c.sheetPageAssetIds].filter((x): x is string => !!x).forEach(removeAssetIfUnused);
@@ -130,7 +124,7 @@ function sniff(path: string): string | null {
 }
 const discard = (f?: Express.Multer.File) => { if (f && existsSync(f.path)) unlinkSync(f.path); };
 
-app.post('/api/assets', dmOnly, upload.single('file'), (req, res) => {
+app.post('/api/assets', upload.single('file'), (req, res) => {
   const f = req.file;
   if (!f) return res.status(400).json({ error: '没有收到文件' });
   const mime = sniff(f.path);
@@ -159,7 +153,7 @@ async function storeSheetPages(pdfBytes: Uint8Array, originalName: string): Prom
   }
 }
 
-app.post('/api/import/pdf', dmOnly, upload.single('file'), async (req, res) => {
+app.post('/api/import/pdf', upload.single('file'), async (req, res) => {
   const f = req.file;
   if (!f) return res.status(400).json({ error: '没有收到文件' });
   if (sniff(f.path) !== 'application/pdf') {
@@ -207,18 +201,18 @@ const title = (v: unknown) => {
   if (t.length > 24) throw new ValidationError('页面标题最多 24 个字', 'title');
   return t;
 };
-app.post('/api/pages', dmOnly, (req, res) => {
+app.post('/api/pages', (req, res) => {
   const p = db.createPage(title(req.body?.title));
   broadcast('pages');
   res.status(201).json(p);
 });
-app.patch('/api/pages/:id', dmOnly, (req, res) => {
+app.patch('/api/pages/:id', (req, res) => {
   if (!db.getPage(req.params.id)) return res.status(404).json({ error: '找不到这一页' });
   db.renamePage(req.params.id, title(req.body?.title));
   broadcast('pages');
   res.json(db.getPage(req.params.id));
 });
-app.post('/api/pages/reorder', dmOnly, (req, res) => {
+app.post('/api/pages/reorder', (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(String) : [];
   const existing = new Set(db.listPages().map((p) => p.id));
   if (ids.length !== existing.size || ids.some((id: string) => !existing.has(id))) return res.status(400).json({ error: '页面顺序不完整' });
@@ -226,7 +220,7 @@ app.post('/api/pages/reorder', dmOnly, (req, res) => {
   broadcast('pages');
   res.json(db.listPages());
 });
-app.delete('/api/pages/:id', dmOnly, (req, res) => {
+app.delete('/api/pages/:id', (req, res) => {
   if (req.params.id === db.overviewPageId()) return res.status(400).json({ error: '角色总览不能删除' });
   const refs = db.deletePage(req.params.id);
   refs.forEach(removeAssetIfUnused);
@@ -240,7 +234,7 @@ const coord = (v: unknown, field: string, min: number, max: number) => {
   if (!Number.isFinite(n) || n < min || n > max) throw new ValidationError(`${field} 超出范围`, field);
   return Math.round(n * 10) / 10;
 };
-app.post('/api/pages/:id/objects', dmOnly, (req, res) => {
+app.post('/api/pages/:id/objects', (req, res) => {
   if (!db.getPage(req.params.id)) return res.status(404).json({ error: '找不到这一页' });
   const b = req.body ?? {};
   const type = b.type === 'character' ? 'character' : b.type === 'image' ? 'image' : b.type === 'sticker' ? 'sticker' : null;
@@ -257,7 +251,7 @@ app.post('/api/pages/:id/objects', dmOnly, (req, res) => {
   broadcast('objects');
   res.status(201).json(o);
 });
-app.patch('/api/objects/:id', dmOnly, (req, res) => {
+app.patch('/api/objects/:id', (req, res) => {
   const b = req.body ?? {};
   const patch: Parameters<typeof db.updateObject>[1] = {};
   if (b.x !== undefined) patch.x = coord(b.x, 'x', -2000, 4000);
@@ -271,7 +265,7 @@ app.patch('/api/objects/:id', dmOnly, (req, res) => {
   broadcast('objects');
   res.json(o);
 });
-app.delete('/api/objects/:id', dmOnly, (req, res) => {
+app.delete('/api/objects/:id', (req, res) => {
   const o = db.deleteObject(req.params.id);
   if (o?.type === 'image') removeAssetIfUnused(o.ref);
   broadcast('objects');
@@ -279,7 +273,7 @@ app.delete('/api/objects/:id', dmOnly, (req, res) => {
 });
 
 // ---------- overview layout ----------
-app.put('/api/overview/:characterId', dmOnly, (req, res) => {
+app.put('/api/overview/:characterId', (req, res) => {
   if (!db.getCharacter(req.params.characterId)) return res.status(404).json({ error: '找不到这个角色' });
   const p = db.setOverviewPosition(req.params.characterId, coord(req.body?.x, 'x', -2000, 4000), coord(req.body?.y, 'y', -2000, 4000));
   broadcast('overview');

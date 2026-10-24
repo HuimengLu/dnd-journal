@@ -18,6 +18,20 @@ import { stickerById, type Sticker } from './stickers.ts';
 
 const PAGE_STORAGE = 'campaign-journal-page';
 const PAPER_STORAGE = 'campaign-journal-paper';
+const IDENTITY_STORAGE = 'campaign-journal-identity';
+
+/** DM / 玩家 is a per-viewer label (who you are at the table), switchable at any time; it grants nothing. */
+function useIdentity(fallback: Role) {
+  const [identity, setIdentity] = useState<Role>(() => {
+    try { const v = localStorage.getItem(IDENTITY_STORAGE); return v === 'dm' || v === 'player' ? v : fallback; } catch { return fallback; }
+  });
+  const toggle = () => setIdentity((cur) => {
+    const next: Role = cur === 'dm' ? 'player' : 'dm';
+    try { localStorage.setItem(IDENTITY_STORAGE, next); } catch { /* ignore */ }
+    return next;
+  });
+  return [identity, toggle] as const;
+}
 
 /** Paper is a per-viewer choice, remembered per page (tab) in this browser. */
 function usePaperChoice() {
@@ -63,7 +77,9 @@ interface JournalProps {
 
 function Journal({ data, role, online, updateCharacter }: JournalProps) {
   const toast = useToast();
-  const isDm = role === 'dm';
+  // Everyone at the table has the same tools; components get full permissions regardless of which link was used.
+  const tools: Role = 'dm';
+  const [identity, toggleIdentity] = useIdentity(role);
   const [active, setActive] = useState<string>(() => { try { return localStorage.getItem(PAGE_STORAGE) ?? OVERVIEW_ID; } catch { return OVERVIEW_ID; } });
   const [openId, setOpenId] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
@@ -195,11 +211,11 @@ function Journal({ data, role, online, updateCharacter }: JournalProps) {
       <header className="topbar">
         <div className="topbar-title">
           <span className="topbar-campaign">{data.campaign.name}</span>
-          <span className={`role-chip role-chip--${role}`}>{isDm ? 'DM' : '玩家'}</span>
+          <button type="button" className={`role-chip role-chip--${identity}`} onClick={toggleIdentity} title="点击切换身份（只影响显示和掷骰署名）" aria-label={`当前身份：${identity === 'dm' ? 'DM' : '玩家'}，点击切换`}>{identity === 'dm' ? 'DM' : '玩家'}</button>
           <span className={`sync${online ? '' : ' sync--off'}`} role="status">{online ? '已同步' : '连接中断，正在重连…'}</span>
         </div>
         <div className="topbar-actions">
-          {isDm && page && (
+          {page && (
             <>
               <button type="button" className="btn btn--ghost" disabled={busy} onClick={() => fileInput.current?.click()}>{busy ? '上传中…' : '上传图片'}</button>
               <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) placeImage(f); }} />
@@ -213,19 +229,20 @@ function Journal({ data, role, online, updateCharacter }: JournalProps) {
               </div>
             </>
           )}
-          {isDm && <button type="button" className="btn btn--ghost" onClick={copyPlayerLink}>邀请玩家</button>}
+          <button type="button" className="btn btn--ghost" onClick={copyPlayerLink}>邀请玩家</button>
         </div>
       </header>
 
       <Stage>
         <Notebook
-          tabs={<PageTabs pages={data.pages} active={page ? page.id : OVERVIEW_ID} role={role} onSelect={setActive} />}
+          tabs={<PageTabs pages={data.pages} active={page ? page.id : OVERVIEW_ID} role={tools} onSelect={setActive} />}
           paper={PAPERS.some((p) => p.id === papers[page ? page.id : OVERVIEW_ID]) ? papers[page ? page.id : OVERVIEW_ID] : DEFAULT_PAPER}
           onPaperChange={(p) => setPaper(page ? page.id : OVERVIEW_ID, p)}
-          onDropSticker={isDm ? (id, at) => { const s = stickerById(id); if (s) placeSticker(s, at); } : undefined}
+          onDropSticker={(id, at) => { const s = stickerById(id); if (s) placeSticker(s, at); }}
           tools={
             <Toolbar
-              role={role}
+              role={tools}
+              identity={identity}
               rolls={data.rolls}
               onAddCharacter={() => setImporting(true)}
               onPlaceSticker={placeSticker}
@@ -239,7 +256,7 @@ function Journal({ data, role, online, updateCharacter }: JournalProps) {
               pageId={page.id}
               objects={data.objects}
               characters={data.characters}
-              role={role}
+              role={tools}
               onOpen={(id) => { setNote(null); setTip(null); setOpenId(id); }}
               onEditHp={(id, anchor) => setHpEdit({ id, anchor })}
               onQuickEdit={(id, field, anchor) => setQuick({ id, field, anchor })}
@@ -251,7 +268,7 @@ function Journal({ data, role, online, updateCharacter }: JournalProps) {
             <OverviewPage
               characters={data.characters}
               positions={data.overview}
-              role={role}
+              role={tools}
               onOpen={(id) => { setNote(null); setTip(null); setOpenId(id); }}
               onEditHp={(id, anchor) => setHpEdit({ id, anchor })}
               onQuickEdit={(id, field, anchor) => setQuick({ id, field, anchor })}
@@ -266,7 +283,7 @@ function Journal({ data, role, online, updateCharacter }: JournalProps) {
               pageId={data.overviewPageId}
               objects={data.objects}
               characters={data.characters}
-              role={role}
+              role={tools}
               onOpen={(id) => { setNote(null); setTip(null); setOpenId(id); }}
               onEditHp={(id, anchor) => setHpEdit({ id, anchor })}
               onQuickEdit={(id, field, anchor) => setQuick({ id, field, anchor })}
@@ -281,7 +298,7 @@ function Journal({ data, role, online, updateCharacter }: JournalProps) {
       {open && (
         <DetailPanel
           character={open}
-          role={role}
+          role={tools}
           onClose={() => setOpenId(null)}
           onUpdate={(patch, label) => change(open, patch, label)}
           onDeleted={() => setOpenId(null)}
