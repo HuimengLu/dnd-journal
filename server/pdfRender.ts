@@ -32,6 +32,7 @@ interface Widget {
 export async function renderPdfPages(bytes: Uint8Array, { scale = 2, maxPages = 6 } = {}): Promise<Buffer[]> {
   const doc = await getDocument({
     data: bytes,
+    verbosity: 0, // errors only: official sheets trigger harmless "push button" warnings
     cMapUrl: join(PDFJS_DIR, 'cmaps') + '/',
     cMapPacked: true,
     standardFontDataUrl: join(PDFJS_DIR, 'standard_fonts') + '/',
