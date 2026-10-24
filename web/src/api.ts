@@ -52,7 +52,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 export const api = {
   session: () => request<{ role: Role; campaign: { id: string; name: string } }>('GET', '/session'),
   state: () => request<CampaignState>('GET', '/state'),
-  links: () => request<{ playerKey: string }>('GET', '/links'),
+  links: () => request<{ playerKey: string; requireInvite: boolean }>('GET', '/links'),
 
   createCharacter: (input: CharacterInput) => request<Character>('POST', '/characters', input),
   updateCharacter: (id: string, patch: Partial<CharacterInput>) => request<Character>('PATCH', `/characters/${id}`, patch),

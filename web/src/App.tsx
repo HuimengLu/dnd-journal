@@ -197,8 +197,9 @@ function Journal({ data, role, online, updateCharacter }: JournalProps) {
   /** "邀请玩家": copies the private player link to the clipboard. */
   const copyPlayerLink = async () => {
     try {
-      const { playerKey } = await api.links();
-      const url = `${window.location.origin}/?key=${playerKey}`;
+      const { playerKey, requireInvite } = await api.links();
+      // open sites just share the address; locked ones need the player key in the link
+      const url = requireInvite ? `${window.location.origin}/?key=${playerKey}` : `${window.location.origin}/`;
       await navigator.clipboard.writeText(url);
       toast({ tone: 'info', message: '玩家链接已复制，发给队友就能打开' });
     } catch {

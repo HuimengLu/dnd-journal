@@ -42,8 +42,12 @@ const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '200kb' }));
 
+// Open by default: anyone with the site address can use it. Set REQUIRE_INVITE=1 to require the
+// ?key= from one of the invite links again.
+const REQUIRE_INVITE = process.env.REQUIRE_INVITE === '1';
+
 const auth = (req: Request, res: Response, next: NextFunction) => {
-  const role = roleFor(req.get('x-campaign-key') ?? req.query.key);
+  const role = roleFor(req.get('x-campaign-key') ?? req.query.key) ?? (REQUIRE_INVITE ? null : 'player');
   if (!role) return res.status(401).json({ error: '链接无效或已过期，请向 DM 要新的链接' });
   req.role = role;
   next();
@@ -73,7 +77,7 @@ function state(): CampaignState {
 app.get('/api/session', (req, res) => res.json({ role: req.role, campaign: db.getCampaign() }));
 app.get('/api/state', (_req, res) => res.json(state()));
 /** "邀请玩家": lets anyone at the table copy the player link from the app. */
-app.get('/api/links', (_req, res) => res.json({ playerKey: keys.player }));
+app.get('/api/links', (_req, res) => res.json({ playerKey: keys.player, requireInvite: REQUIRE_INVITE }));
 
 // ---------- characters ----------
 const assetExists = (id: string) => db.getAssetRow(id) !== null;
@@ -330,6 +334,10 @@ app.listen(PORT, () => {
   // PUBLIC_URL (e.g. https://your-app.up.railway.app) makes the printed links usable as-is once deployed
   const base = (process.env.PUBLIC_URL ?? `http://localhost:${PROD ? PORT : 5173}`).replace(/\/$/, '');
   console.log(`\nCampaign Journal API on port ${PORT}`);
-  console.log(`  DM link:     ${base}/?key=${keys.dm}`);
-  console.log(`  Player link: ${base}/?key=${keys.player}\n`);
+  if (REQUIRE_INVITE) {
+    console.log(`  DM link:     ${base}/?key=${keys.dm}`);
+    console.log(`  Player link: ${base}/?key=${keys.player}\n`);
+  } else {
+    console.log(`  Open access: ${base}/  (set REQUIRE_INVITE=1 to require invite links)\n`);
+  }
 });

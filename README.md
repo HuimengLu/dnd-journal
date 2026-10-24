@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-The server prints two private links on start:
+By default the site is open: anyone with its address can use it, no key needed. To make it private, set `REQUIRE_INVITE=1`; the server then prints two private links on start:
 
 - **DM link** and **Player link** have the same permissions: anyone at the table can add characters, import PDFs, edit stats, arrange pages, upload images and place stickers.
 
@@ -32,7 +32,7 @@ The app needs a long-running Node server and a persistent disk (SQLite database,
 2. In the service: add a Volume mounted at `/data`.
 3. Variables: `DATA_DIR=/data`, and after step 4, `PUBLIC_URL=https://<your-domain>`.
 4. Settings → Networking → Generate Domain.
-5. Redeploy, then read the DM and player links from the deploy logs.
+5. Redeploy and open the domain. (With `REQUIRE_INVITE=1`, read the DM and player links from the deploy logs instead.)
 
 `railway.json` sets the build (`npm run build`) and start (`npm start`) commands; Railway provides `PORT`.
 
