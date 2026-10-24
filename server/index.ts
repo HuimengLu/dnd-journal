@@ -5,7 +5,7 @@ import { existsSync, readFileSync, writeFileSync, unlinkSync, renameSync } from 
 import { join, extname } from 'node:path';
 import * as db from './db.ts';
 import { extractCharacterFields } from './pdf.ts';
-import { aiAvailable, describeAiError, extractWithClaude } from './aiExtract.ts';
+import { aiAvailable, describeAiError, extractWithClaude, redactKeys } from './aiExtract.ts';
 import { renderPdfPages } from './pdfRender.ts';
 import { validateCharacter, ValidationError } from './validate.ts';
 import { type CampaignState, type Role } from '../shared/types.ts';
@@ -185,7 +185,7 @@ app.post('/api/import/pdf', upload.single('file'), async (req, res) => {
     if (!result) {
       if (!aiAvailable()) throw new Error('SCAN');
       try { result = await extractWithClaude(bytes, mime); }
-      catch (e) { console.error('AI sheet read failed:', e); throw new AiReadError(describeAiError(e)); }
+      catch (e) { console.error('AI sheet read failed:', redactKeys(e instanceof Error ? `${e.name}: ${e.message}\n${e.stack ?? ''}` : String(e))); throw new AiReadError(describeAiError(e)); }
     }
     const { fields, missing } = result;
     let pdfAssetId: string | null = null;

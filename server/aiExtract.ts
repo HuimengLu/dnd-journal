@@ -7,7 +7,10 @@ import { ATTACK_ICONS, type AttackIcon, type CharacterInput, emptyCharacterInput
  * Reads character sheets that have no form fields (scans, exported images, artifact printouts)
  * by asking Claude to read the page. Only active when ANTHROPIC_API_KEY is set on the server.
  */
-export const aiAvailable = () => Boolean(process.env.ANTHROPIC_API_KEY);
+export const aiAvailable = () => Boolean(process.env.ANTHROPIC_API_KEY?.trim());
+
+/** Keeps API keys out of logs and error messages. */
+export const redactKeys = (text: string) => text.replace(/sk-ant-[\w-]+/g, 'sk-ant-***');
 
 const num = z.number().int().nullable();
 const SheetSchema = z.object({
@@ -39,7 +42,9 @@ const PROMPT = `这是一张 D&D 5e（2024 规则）角色卡。请把角色信�
 属性填原始值（例如 16），不是调整值（+3）。`;
 
 export async function extractWithClaude(bytes: Uint8Array, mime: string): Promise<{ fields: CharacterInput; missing: string[] }> {
-  const client = new Anthropic();
+  const apiKey = process.env.ANTHROPIC_API_KEY!.trim();
+  if (/\s/.test(apiKey)) throw new Error('KEY_FORMAT');
+  const client = new Anthropic({ apiKey });
   const data = Buffer.from(bytes).toString('base64');
   const file =
     mime === 'application/pdf'
@@ -85,6 +90,8 @@ export async function extractWithClaude(bytes: Uint8Array, mime: string): Promis
 
 /** Turns an API failure into a message the DM can act on (shown in the import dialog). */
 export function describeAiError(e: unknown): string {
+  if (e instanceof Error && (e.message === 'KEY_FORMAT' || /invalid header value/i.test(e.message)))
+    return 'ANTHROPIC_API_KEY 的格式不对：Value 里只能放 sk-ant- 开头的那一串 key，不要粘贴整段示例命令';
   if (e instanceof Anthropic.APIError) {
     const msg = e.message ?? '';
     if (e.status === 401) return 'API key 无效，请检查 Render 里 ANTHROPIC_API_KEY 的值有没有复制完整';
@@ -92,7 +99,7 @@ export function describeAiError(e: unknown): string {
     if (/credit balance/i.test(msg)) return 'Anthropic 账户余额不足，请先在 console.anthropic.com 的 Billing 里充值';
     if (e.status === 429) return 'AI 请求太频繁或额度已用完，稍后再试';
     if (e.status && e.status >= 500) return 'Anthropic 服务暂时繁忙，过一会儿再试';
-    return `AI 读取失败（${e.status ?? '网络错误'}）：${msg.slice(0, 160)}`;
+    return `AI 读取失败（${e.status ?? '网络错误'}）：${redactKeys(msg).slice(0, 160)}`;
   }
-  return `AI 读取失败：${e instanceof Error ? e.message.slice(0, 160) : '未知错误'}`;
+  return `AI 读取失败：${e instanceof Error ? redactKeys(e.message).slice(0, 160) : '未知错误'}`;
 }
