@@ -1,0 +1,32 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icon / Potion" filter="url(#filter0_gn_0_6)">
+<path id="Vector" d="M33.25 3.5H22.75C21.7835 3.5 21 4.2835 21 5.25V7.875C21 8.8415 21.7835 9.625 22.75 9.625H33.25C34.2165 9.625 35 8.8415 35 7.875V5.25C35 4.2835 34.2165 3.5 33.25 3.5Z" fill="#33358C"/>
+<path id="Vector_2" d="M23.625 9.625H32.375V19.25C36.0201 20.304 39.1621 22.6385 41.2234 25.8242C43.2846 29.0099 44.1265 32.8326 43.5943 36.5895C43.062 40.3464 41.1914 43.7848 38.3263 46.2726C35.4613 48.7603 31.7944 50.1302 28 50.1302C24.2056 50.1302 20.5387 48.7603 17.6737 46.2726C14.8086 43.7848 12.938 40.3464 12.4057 36.5895C11.8735 32.8326 12.7154 29.0099 14.7766 25.8242C16.8379 22.6385 19.9799 20.304 23.625 19.25V9.625Z" stroke-width="3" stroke-linejoin="round" stroke="#33358C"/>
+<path id="Vector_3" d="M13.125 35H42.875C42.875 38.9451 41.3078 42.7286 38.5182 45.5182C35.7286 48.3078 31.9451 49.875 28 49.875C24.0549 49.875 20.2714 48.3078 17.4818 45.5182C14.6922 42.7286 13.125 38.9451 13.125 35Z" fill="#8587C9"/>
+<path id="Vector_4" d="M13.125 35H42.875" stroke-width="2.5" stroke-linecap="round" stroke="#33358C"/>
+<path id="Vector_5" opacity="0.5" d="M19.25 25.375C17.5 28.875 17.2083 32.0833 18.375 35" stroke-width="2" stroke-linecap="round" stroke="#33358C"/>
+</g>
+<defs>
+<filter id="filter0_gn_0_6" x="-0.9" y="-0.9" width="57.8" height="57.8" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feTurbulence type="fractalNoise" baseFrequency="0.5 0.5" numOctaves="3" seed="0" />
+<feDisplacementMap in="shape" scale="1.7999999523162842" xChannelSelector="R" yChannelSelector="G" result="displacedImage" width="100%" height="100%" />
+<feMerge result="effect1_texture_0_6">
+<feMergeNode in="displacedImage"/>
+</feMerge>
+<feTurbulence type="fractalNoise" baseFrequency="0.625 0.625" stitchTiles="stitch" numOctaves="3" result="noise" seed="0" />
+<feColorMatrix in="noise" type="luminanceToAlpha" result="alphaNoise" />
+<feComponentTransfer in="alphaNoise" result="coloredNoise1">
+<feFuncA type="discrete" tableValues="0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "/>
+</feComponentTransfer>
+<feComposite operator="in" in2="effect1_texture_0_6" in="coloredNoise1" result="noise1Clipped" />
+<feFlood flood-color="rgba(255, 255, 255, 0.35)" result="color1Flood" />
+<feComposite operator="in" in2="noise1Clipped" in="color1Flood" result="color1" />
+<feMerge result="effect2_noise_0_6">
+<feMergeNode in="effect1_texture_0_6" />
+<feMergeNode in="color1" />
+</feMerge>
+</filter>
+</defs>
+</svg>
