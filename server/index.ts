@@ -133,9 +133,10 @@ app.post('/api/assets', upload.single('file'), (req, res) => {
   const f = req.file;
   if (!f) return res.status(400).json({ error: '没有收到文件' });
   const mime = sniff(f.path);
-  if (!mime || !IMAGE_TYPES.includes(mime)) {
+  // PDFs are accepted so a backup's original sheets can be restored
+  if (!mime || !(IMAGE_TYPES.includes(mime) || mime === 'application/pdf')) {
     discard(f);
-    return res.status(415).json({ error: '只支持 JPEG、PNG、WebP 图片' });
+    return res.status(415).json({ error: '只支持 JPEG、PNG、WebP 图片或 PDF' });
   }
   const w = Number(req.body.width) || null, h = Number(req.body.height) || null;
   const asset = db.insertAsset({ storedName: f.filename, originalName: f.originalname.slice(0, 120), mime, size: f.size, width: w, height: h });
