@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { z } from 'zod';
-import { ATTACK_ICONS, type CharacterInput, emptyCharacterInput } from '../shared/types.ts';
+import { ATTACK_ICONS, type AttackIcon, type CharacterInput, emptyCharacterInput } from '../shared/types.ts';
 
 /**
  * Reads character sheets that have no form fields (scans, exported images, artifact printouts)
@@ -26,7 +26,7 @@ const SheetSchema = z.object({
       z.object({
         name: z.string().describe('攻击或常用攻击法术的中文名'),
         badge: z.string().describe('命中加值如 "+5"，或豁免 DC 如 "DC14"'),
-        icon: z.enum(ATTACK_ICONS).describe('dagger 匕首/短剑, sword 长剑/刺剑, axe 斧, bow 弓弩/远程, flame 火焰伤害法术, fist 徒手, mockery 嘲讽/心灵伤害, whispers 音波/心灵法术, sparkle 其他魔法'),
+        icon: z.string().describe(`只能是 ${ATTACK_ICONS.join(' / ')} 之一。` + 'dagger 匕首/短剑, sword 长剑/刺剑, axe 斧, bow 弓弩/远程, flame 火焰伤害法术, fist 徒手, mockery 嘲讽/心灵伤害, whispers 音波/心灵法术, sparkle 其他魔法'),
         summary: z.string().describe('一行概括：伤害骰与伤害类型，例如 "1d8+3 穿刺"'),
         details: z.string().describe('一到两句说明射程、特性或效果'),
       }),
@@ -75,6 +75,24 @@ export async function extractWithClaude(bytes: Uint8Array, mime: string): Promis
     if (v === null) missing.push(a);
     else out.abilities[a] = v;
   }
-  out.attacks = s.attacks.slice(0, 4);
+  // the SDK can't enforce enums in the output schema, so unknown icons fall back to sparkle
+  out.attacks = s.attacks.slice(0, 4).map((a) => ({
+    ...a,
+    icon: (ATTACK_ICONS as readonly string[]).includes(a.icon) ? (a.icon as AttackIcon) : 'sparkle',
+  }));
   return { fields: out, missing };
+}
+
+/** Turns an API failure into a message the DM can act on (shown in the import dialog). */
+export function describeAiError(e: unknown): string {
+  if (e instanceof Anthropic.APIError) {
+    const msg = e.message ?? '';
+    if (e.status === 401) return 'API key 无效，请检查 Render 里 ANTHROPIC_API_KEY 的值有没有复制完整';
+    if (e.status === 403) return '这个 API key 没有权限使用模型，请在 console.anthropic.com 检查账户';
+    if (/credit balance/i.test(msg)) return 'Anthropic 账户余额不足，请先在 console.anthropic.com 的 Billing 里充值';
+    if (e.status === 429) return 'AI 请求太频繁或额度已用完，稍后再试';
+    if (e.status && e.status >= 500) return 'Anthropic 服务暂时繁忙，过一会儿再试';
+    return `AI 读取失败（${e.status ?? '网络错误'}）：${msg.slice(0, 160)}`;
+  }
+  return `AI 读取失败：${e instanceof Error ? e.message.slice(0, 160) : '未知错误'}`;
 }

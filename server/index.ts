@@ -5,7 +5,7 @@ import { existsSync, readFileSync, writeFileSync, unlinkSync, renameSync } from 
 import { join, extname } from 'node:path';
 import * as db from './db.ts';
 import { extractCharacterFields } from './pdf.ts';
-import { aiAvailable, extractWithClaude } from './aiExtract.ts';
+import { aiAvailable, describeAiError, extractWithClaude } from './aiExtract.ts';
 import { renderPdfPages } from './pdfRender.ts';
 import { validateCharacter, ValidationError } from './validate.ts';
 import { type CampaignState, type Role } from '../shared/types.ts';
@@ -163,9 +163,8 @@ function storeSheetImage(f: Express.Multer.File, mime: string): string {
   return db.insertAsset({ storedName: f.filename, originalName: f.originalname.slice(0, 120), mime, size: f.size, width: null, height: null }).id;
 }
 
-const SCAN_HINT = aiAvailable()
-  ? 'AI 也没能读出这张角色卡，可以改用手动创建'
-  : '这份角色卡是图片，没有可读取的表单字段。要自动识别，需要在服务器环境变量里设置 ANTHROPIC_API_KEY；也可以改用手动创建';
+const SCAN_HINT = '这份角色卡是图片，没有可读取的表单字段。要自动识别，需要在服务器环境变量里设置 ANTHROPIC_API_KEY；也可以改用手动创建';
+class AiReadError extends Error {}
 
 app.post('/api/import/pdf', upload.single('file'), async (req, res) => {
   const f = req.file;
@@ -186,7 +185,7 @@ app.post('/api/import/pdf', upload.single('file'), async (req, res) => {
     if (!result) {
       if (!aiAvailable()) throw new Error('SCAN');
       try { result = await extractWithClaude(bytes, mime); }
-      catch (e) { console.error('AI sheet read failed:', e); throw new Error('SCAN'); }
+      catch (e) { console.error('AI sheet read failed:', e); throw new AiReadError(describeAiError(e)); }
     }
     const { fields, missing } = result;
     let pdfAssetId: string | null = null;
@@ -204,6 +203,7 @@ app.post('/api/import/pdf', upload.single('file'), async (req, res) => {
     res.json({ pdfAssetId, fields, missing, sameNameCharacterId: dup?.id ?? null });
   } catch (e) {
     discard(f);
+    if (e instanceof AiReadError) return res.status(422).json({ error: e.message });
     const scan = e instanceof Error && e.message === 'SCAN';
     res.status(422).json({ error: scan ? SCAN_HINT : 'PDF 无法读取，可能已损坏或加密，可以改用手动创建' });
   }
