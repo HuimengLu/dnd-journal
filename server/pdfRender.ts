@@ -29,7 +29,7 @@ interface Widget {
  * Renders every page of a character sheet to WebP: the blank page from pdf.js, then each form
  * field's value written into its box.
  */
-export async function renderPdfPages(bytes: Uint8Array, { scale = 2, maxPages = 6 } = {}): Promise<Buffer[]> {
+export async function renderPdfPages(bytes: Uint8Array, { scale = 1.5, maxPages = 6 } = {}): Promise<Buffer[]> {
   const doc = await getDocument({
     data: bytes,
     verbosity: 0, // errors only: official sheets trigger harmless "push button" warnings

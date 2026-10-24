@@ -1,8 +1,10 @@
 import { ABILITIES, ATTACK_ICONS, CONDITION_IDS, type Attack, type CharacterInput, type ConditionId } from '../shared/types.ts';
 
 export class ValidationError extends Error {
-  constructor(message: string, readonly field?: string) {
+  readonly field?: string;
+  constructor(message: string, field?: string) {
     super(message);
+    this.field = field;
   }
 }
 
