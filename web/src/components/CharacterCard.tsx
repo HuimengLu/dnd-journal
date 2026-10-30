@@ -9,19 +9,20 @@ export const CARD_W = 373;
 export const CARD_H = 479;
 
 /**
- * Stroke treatments, compared side by side at /?card-looks. "design" is the Figma frame as drawn (clean frame
- * lines, textured slots and art); the crayon looks run every solid stroke through a #crayon-* filter, and the
+ * Stroke treatments, compared side by side at /?card-looks. "clean" draws every line and icon as plain solid
+ * strokes, with no filter at all; "design" is the Figma frame as drawn (clean frame lines, textured slots and art); the crayon looks run every solid stroke through a #crayon-* filter, and the
  * sketch looks use the grey ink-map palette with #sketch-* filters that thicken and thin each line like a brush pen.
  */
-export type CardLook = 'sketch' | 'sketch-bold' | 'sketch-loose' | 'design' | 'crayon-fine' | 'crayon' | 'crayon-heavy' | 'crayon-streak' | 'crayon-wax';
-export const DEFAULT_CARD_LOOK: CardLook = 'crayon';
+export type CardLook = 'clean' | 'sketch' | 'sketch-bold' | 'sketch-loose' | 'design' | 'crayon-fine' | 'crayon' | 'crayon-heavy' | 'crayon-streak' | 'crayon-wax';
+export const DEFAULT_CARD_LOOK: CardLook = 'clean';
 export const CARD_LOOKS: { id: CardLook; label: string; note: string; palette: CardPalette }[] = [
+  { id: 'clean', label: '干净实线（当前使用）', note: '所有线条、图标都是干净的实线，没有蜡笔或抖动纹理', palette: 'clean' },
   { id: 'sketch', label: '手绘 · 自然', note: '灰阶 + 黄 / 橙红配色，线条粗细随笔势轻微变化', palette: 'sketch' },
   { id: 'sketch-bold', label: '手绘 · 浓墨', note: '粗细对比更强，像压重了的马克笔', palette: 'sketch' },
   { id: 'sketch-loose', label: '手绘 · 随性', note: '线条更抖、更松，像快速画的草图', palette: 'sketch' },
   { id: 'design', label: '设计稿原样', note: '外框和分隔线是干净的实线，只有格子、图标、爱心带纹理', palette: 'figma' },
   { id: 'crayon-fine', label: '蜡笔 · 细腻', note: '颗粒细、缺口少，像削尖的蜡笔', palette: 'figma' },
-  { id: 'crayon', label: '蜡笔 · 标准（当前使用）', note: '边缘轻微抖动，纸纹把墨色磨出小缺口', palette: 'figma' },
+  { id: 'crayon', label: '蜡笔 · 标准', note: '边缘轻微抖动，纸纹把墨色磨出小缺口', palette: 'figma' },
   { id: 'crayon-heavy', label: '蜡笔 · 粗犷', note: '颗粒更大、缺口更多，像用钝了的蜡笔', palette: 'figma' },
   { id: 'crayon-streak', label: '蜡笔 · 横纹', note: '纸纹是横向的细条，像在有纹理的纸上涂', palette: 'figma' },
   { id: 'crayon-wax', label: '蜡笔 · 油蜡', note: '边缘略微晕开，更软更厚', palette: 'figma' },

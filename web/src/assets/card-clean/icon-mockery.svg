@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="56.9" height="56.9" viewBox="0 0 56.9 56.9" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Icon / Mockery">
+<g clip-path="url(#clip0_0_109)">
+<path id="Vector" d="M10.5 11.4H40.25C44.9167 11.4 47.25 13.7333 47.25 18.4V32.4C47.25 37.0667 44.9167 39.4 40.25 39.4H24.5L14.875 47.275L16.625 39.4H10.5C5.83333 39.4 3.5 37.0667 3.5 32.4V18.4C3.5 13.7333 5.83333 11.4 10.5 11.4Z" fill="#9A9CD6" stroke-width="3" stroke-linejoin="round" stroke="#322C2C"/>
+<path id="Vector_2" d="M14.875 21.025L20.125 23.2125M35.875 21.025L30.625 23.2125" stroke-width="3" stroke-linecap="round" stroke="#322C2C"/>
+<path id="Vector_3" d="M15.75 28.025C22.1667 32.6917 28.5833 32.6917 35 28.025" stroke-width="3" stroke-linecap="round" stroke="#322C2C"/>
+<path id="Vector_4" d="M26.25 31.525C27.4167 35.6083 29.4583 36.1917 32.375 33.275" stroke-width="2.5" stroke-linecap="round" stroke="#322C2C"/>
+<path id="Vector_5" d="M49.875 7.025L53.375 3.525M50.75 14.025H55.125M48.125 3.525L49 0.025" stroke-width="2.5" stroke-linecap="round" stroke="#322C2C"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_109">
+<rect width="56" height="56" fill="white" transform="translate(0 0.9)"/>
+</clipPath>
+</defs>
+</svg>

@@ -25,13 +25,17 @@ export const ICON_LABELS: Record<AttackIcon, string> = {
 
 export const attackIcon = (icon: AttackIcon) => ICONS[icon] ?? sparkle;
 
-/** Character card art, one folder per palette: card = Figma 64:2467 ink, card-sketch = the grey ink-map palette. */
-export type CardPalette = 'figma' | 'sketch';
+/**
+ * Character card art, one folder per palette: card = Figma 64:2467 ink, card-clean = the same art with Figma's
+ * texture/noise effects stripped (plain strokes), card-sketch = the grey ink-map palette.
+ */
+export type CardPalette = 'figma' | 'clean' | 'sketch';
 const CARD_ART_FILES: Record<CardPalette, Record<string, string>> = {
   figma: import.meta.glob('./assets/card/*.svg', { eager: true, import: 'default' }),
+  clean: import.meta.glob('./assets/card-clean/*.svg', { eager: true, import: 'default' }),
   sketch: import.meta.glob('./assets/card-sketch/*.svg', { eager: true, import: 'default' }),
 };
-const DIR: Record<CardPalette, string> = { figma: './assets/card/', sketch: './assets/card-sketch/' };
+const DIR: Record<CardPalette, string> = { figma: './assets/card/', clean: './assets/card-clean/', sketch: './assets/card-sketch/' };
 
 /** A card image by file name (without .svg), e.g. cardArt('sketch', 'heart-filled'). */
 export const cardArt = (palette: CardPalette, name: string) => CARD_ART_FILES[palette][`${DIR[palette]}${name}.svg`];
