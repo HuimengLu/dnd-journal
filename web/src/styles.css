@@ -242,7 +242,7 @@ button.role-chip:hover { transform: rotate(2deg) scale(1.05); }
 /* Figma 64:2467: a 373×479 black frame (3px, r14) around the 335×441 sheet. The sheet's outline steps round the
    bleed portrait: portrait right + bottom, name box top + right, lower box left + right + bottom.
    Every solid stroke is its own layer and takes --crayon-line / --crayon-slot / --crayon-art, so a look can
-   roughen the lines without touching the text. */
+   roughen the lines without touching the text (or the rings right around it). */
 .cc {
   --fold: 0px;
   --cc-radius: 14px;
@@ -277,7 +277,8 @@ button.role-chip:hover { transform: rotate(2deg) scale(1.05); }
 .cc-ac { position: absolute; right: -15px; bottom: -14px; width: 42px; height: 44px; display: flex; flex-direction: column; align-items: center; z-index: 1; }
 .cc-ac svg { position: absolute; inset: 0; }
 .cc-ac-fill { fill: var(--card-paper); }
-.cc-ac-shield { fill: none; stroke: var(--ink); filter: var(--crayon-art); }
+/* the shield and badge rings sit right against small numbers, so they stay clean in every look for legibility */
+.cc-ac-shield { fill: none; stroke: var(--ink); }
 .cc-ac-label { position: relative; margin-top: 7px; font: 11px/1 var(--note); letter-spacing: 0.5px; }
 .cc-ac-value { position: relative; font: 700 17px/1 var(--hand); }
 .cc-ident { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 8px; width: 202px; padding: 20px 20px 18px 24px; }
@@ -321,9 +322,9 @@ button.role-chip:hover { transform: rotate(2deg) scale(1.05); }
 .cc-slot-icon { position: absolute; left: 26px; top: 26px; width: 56px; height: 56px; display: block; filter: var(--crayon-art); }
 .cc-slot-icon--mockery { top: 25.1px; width: 56.9px; height: 56.9px; }
 .cc-badge { position: absolute; left: 14px; top: 87px; width: 38px; height: 38px; display: grid; place-items: center; }
-/* solid paper under the badge art, so a worn crayon ring never lets the slot line show through the number */
+/* solid paper under the badge art, so the slot line never shows through the number */
 .cc-badge::before { content: ''; position: absolute; inset: 2px; border-radius: 50%; background: var(--card-paper); }
-.cc-badge img { position: absolute; left: -1px; top: -1px; width: 40px; height: 40px; display: block; max-width: none; filter: var(--crayon-art); }
+.cc-badge img { position: absolute; left: -1px; top: -1px; width: 40px; height: 40px; display: block; max-width: none; }
 .cc-badge-text { position: relative; font: 700 13px/1 var(--hand); letter-spacing: 0.26px; white-space: nowrap; }
 .cc-badge-text--sm { font-size: 13px; letter-spacing: 0.26px; }
 .cc-slot--none .cc-slot-label, .cc-slot--none .cc-badge-text { color: var(--disabled); }
