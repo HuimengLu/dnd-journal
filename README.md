@@ -1,6 +1,6 @@
 # Campaign Journal
 
-A private, shared journal for one D&D campaign: a character status dashboard plus freeform scrapbook pages, styled after the Figma file (BG 01 Paper Grain background 20:925, Ballpoint character cards).
+A private, shared journal for one D&D campaign: a character status dashboard plus freeform scrapbook pages, styled after the Figma file (Scrapbook Spread notebook 54:1816, Ballpoint character cards).
 
 ## Run it
 
@@ -38,9 +38,10 @@ The app needs a long-running Node server and a persistent disk (SQLite database,
 
 ## What's in the MVP
 
-- **Character overview**: cards from Figma 19:144. Six hearts always; they empty in half-heart steps by current/max HP, and turn red at ≤ ⅓ HP (Figma 19:241). Click the number under the hearts (or the HP bar) to set HP exactly. The DM can drag cards anywhere on the spread (positions are shared).
+- **Character overview**: cards from Figma 64:2467, with every solid stroke drawn in crayon (the look is `DEFAULT_CARD_LOOK` in `CharacterCard.tsx`). Open `/?card-looks` to compare the crayon treatments side by side; that page is read-only. Six hearts always; they empty in half-heart steps by current/max HP, and turn red at ≤ ⅓ HP (Figma 19:241). Click the number under the hearts to set HP exactly; temp HP shows as striped hearts stacked above the real ones (Figma 62:2193). The DM can drag cards anywhere on the spread (positions are shared).
 - **PDF import**: upload a fillable 5e sheet, review every extracted field, then save. Nothing is saved without confirmation; same-name imports create a new character instead of overwriting. The original PDF stays linked from the detail panel.
-- **Paper**: three swatches left of the notebook switch the current page to large-grid, lined or small-grid paper (small-grid is the default). The choice is remembered per page in each viewer's browser.
+- **Paper**: five swatches left of the notebook switch the current page to graph, dot, large-grid, small-grid or lined paper (small-grid is the default), matching the Figma variants. The choice is remembered per page in each viewer's browser.
+- **Page turns**: switching tabs flips the page over the spine in 3D, one leaf per page between the two tabs (jumping from the first tab to the third turns two leaves; blank sheets riffle past in between, at most six). Turns are skipped when the system asks for reduced motion.
 - **Detail popup**: click a card to open a centred sheet over a veiled page (close with ✕, Esc or a click outside). HP ± buttons, exact HP, temp HP, all 15 conditions (stored as ids), unconscious stamp, ability scores, edit/delete (DM).
 - **Journal pages**: DM creates, renames (double-click tab), reorders and deletes pages; uploads JPEG/PNG/WebP (button or drag-and-drop); drags, resizes (aspect-locked), layers and removes images and character cards. Layouts persist.
 - **Slot help**: hover an attack or potion slot for a one-line hint; click it for a paper note with the full description (DM can edit both per attack).

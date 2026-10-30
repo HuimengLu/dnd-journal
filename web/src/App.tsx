@@ -239,6 +239,8 @@ function Journal({ data, role, online, updateCharacter }: JournalProps) {
           tabs={<PageTabs pages={data.pages} active={page ? page.id : OVERVIEW_ID} role={tools} onSelect={setActive} />}
           paper={PAPERS.some((p) => p.id === papers[page ? page.id : OVERVIEW_ID]) ? papers[page ? page.id : OVERVIEW_ID] : DEFAULT_PAPER}
           onPaperChange={(p) => setPaper(page ? page.id : OVERVIEW_ID, p)}
+          pageKey={page ? page.id : OVERVIEW_ID}
+          pageOrder={page ? data.pages.indexOf(page) + 1 : 0}
           onDropSticker={(id, at) => { const s = stickerById(id); if (s) placeSticker(s, at); }}
           tools={
             <Toolbar

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Character, JournalObject, Role, SlotInfo } from '../../../shared/types.ts';
 import { api, assetUrl } from '../api.ts';
-import { CARD_W, CharacterCard } from './CharacterCard.tsx';
+import { CARD_H, CARD_W, CharacterCard } from './CharacterCard.tsx';
 import { SPREAD, useStageScale } from './Notebook.tsx';
 import { useToast } from './Toasts.tsx';
 import tape from '../assets/figma/washi-tape-top.svg';
@@ -153,12 +153,12 @@ export function JournalCanvas({ pageId, objects, characters, role, onOpen, onEdi
           <div
             key={o.id}
             className={`jo jo--${o.type}${selected === o.id ? ' jo--selected' : ''}${dragging === o.id ? ' jo--dragging' : ''}`}
-            style={{ left: b.x, top: b.y, width: b.w, height: b.h, zIndex: o.z + 1000, transform: `rotate(${b.rotation}deg)` }}
+            style={{ left: b.x, top: b.y, width: b.w, height: o.type === 'character' ? (b.w * CARD_H) / CARD_W : b.h, zIndex: o.z + 1000, transform: `rotate(${b.rotation}deg)` }}
             onPointerDown={(e) => begin(e, o, 'move')}
             onPointerMove={move}
             onPointerUp={() => end(o)}
             onPointerCancel={() => { gesture.current = null; setDragging(null); }}
-            onDoubleClick={isDm && o.type === 'character' ? (e) => { if (!(e.target as HTMLElement).closest('.cc-quick, .cc-hp-value--edit, .cc-bar')) onOpen(o.ref); } : undefined}
+            onDoubleClick={isDm && o.type === 'character' ? (e) => { if (!(e.target as HTMLElement).closest('.cc-quick, .cc-hp-value--edit')) onOpen(o.ref); } : undefined}
           >
             {o.type === 'sticker' ? (
               <img className="jo-sticker-img" src={stickerById(o.ref)?.url} alt={stickerById(o.ref)?.name ?? '贴纸'} draggable={false} />
@@ -168,7 +168,7 @@ export function JournalCanvas({ pageId, objects, characters, role, onOpen, onEdi
                 <img className="jo-tape" src={tape} alt="" draggable={false} />
               </figure>
             ) : (
-              <div className="jo-card" style={{ transform: `scale(${b.w / CARD_W})` }} onPointerDown={(e) => { if ((e.target as HTMLElement).closest('.cc-hp-value--edit, .cc-bar, .cc-quick')) e.stopPropagation(); }}>
+              <div className="jo-card" style={{ transform: `scale(${b.w / CARD_W})` }} onPointerDown={(e) => { if ((e.target as HTMLElement).closest('.cc-hp-value--edit, .cc-quick')) e.stopPropagation(); }}>
                 <CharacterCard character={ch!} onOpen={isDm ? undefined : () => onOpen(ch!.id)} onEditHp={(a) => onEditHp(ch!.id, a)} canEditHp
                   onQuickEdit={isDm ? (f, a) => onQuickEdit(ch!.id, f, a) : undefined} onSlotHover={onSlotHover} onSlotOpen={onSlotOpen} />
               </div>

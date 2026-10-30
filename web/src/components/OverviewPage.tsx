@@ -106,7 +106,7 @@ export function OverviewPage({ characters, positions, role, onOpen, onEditHp, on
 
   const begin = (e: ReactPointerEvent, c: Character, i: number) => {
     if (!isDm || e.button !== 0) return;
-    if ((e.target as HTMLElement).closest('.cc-hp-value--edit, .cc-bar, .cc-quick, .card-delete')) return; // quick edits, not dragging
+    if ((e.target as HTMLElement).closest('.cc-hp-value--edit, .cc-quick, .card-delete')) return; // quick edits, not dragging
     drag.current = { id: c.id, startX: e.clientX, startY: e.clientY, from: pos(c, i), moved: false };
   };
   const move = (e: ReactPointerEvent) => {
@@ -150,7 +150,7 @@ export function OverviewPage({ characters, positions, role, onOpen, onEditHp, on
             onPointerMove={move}
             onPointerUp={() => end(c)}
             onPointerCancel={() => { drag.current = null; setLifted(null); }}
-            onDoubleClick={isDm ? (e) => { if (!(e.target as HTMLElement).closest('.cc-quick, .cc-hp-value--edit, .cc-bar')) onOpen(c.id); } : undefined}
+            onDoubleClick={isDm ? (e) => { if (!(e.target as HTMLElement).closest('.cc-quick, .cc-hp-value--edit')) onOpen(c.id); } : undefined}
             {...(isDm ? { tabIndex: 0, role: 'button', 'aria-label': `${c.name}，拖动可移动，双击或回车查看详情`,
               onKeyDown: (e: React.KeyboardEvent) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); onOpen(c.id); } } } : {})}
           >

@@ -171,6 +171,18 @@ export function heartUnits(hpCurrent: number, hpMax: number): number {
   return Math.max(1, Math.min(HEART_COUNT * 2, units)); // never show 0 while alive
 }
 
+/**
+ * Half-heart units for real HP and for real + temp HP (temp hearts are striped, stacked above the real ones).
+ * When HP + temp exceeds max, the six hearts measure the combined total so both parts still fit; any temp HP
+ * always shows as at least one striped half-heart.
+ */
+export function heartSplit(hpCurrent: number, hpMax: number, hpTemp: number): { hp: number; total: number } {
+  if (hpTemp <= 0) { const hp = heartUnits(hpCurrent, hpMax); return { hp, total: hp }; }
+  const scale = Math.max(hpMax, hpCurrent + hpTemp);
+  const hp = Math.min(HEART_COUNT * 2 - 1, heartUnits(hpCurrent, scale));
+  return { hp, total: Math.min(HEART_COUNT * 2, Math.max(hp + 1, heartUnits(hpCurrent + hpTemp, scale))) };
+}
+
 /** Low-HP state: at or below one third of max (the red-heart card). */
 export function isLowHp(hpCurrent: number, hpMax: number): boolean {
   return hpMax > 0 && hpCurrent / hpMax <= 1 / 3;

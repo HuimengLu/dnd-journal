@@ -24,3 +24,15 @@ export const ICON_LABELS: Record<AttackIcon, string> = {
 };
 
 export const attackIcon = (icon: AttackIcon) => ICONS[icon] ?? sparkle;
+
+/** Character card art, one folder per palette: card = Figma 64:2467 ink, card-sketch = the grey ink-map palette. */
+export type CardPalette = 'figma' | 'sketch';
+const CARD_ART_FILES: Record<CardPalette, Record<string, string>> = {
+  figma: import.meta.glob('./assets/card/*.svg', { eager: true, import: 'default' }),
+  sketch: import.meta.glob('./assets/card-sketch/*.svg', { eager: true, import: 'default' }),
+};
+const DIR: Record<CardPalette, string> = { figma: './assets/card/', sketch: './assets/card-sketch/' };
+
+/** A card image by file name (without .svg), e.g. cardArt('sketch', 'heart-filled'). */
+export const cardArt = (palette: CardPalette, name: string) => CARD_ART_FILES[palette][`${DIR[palette]}${name}.svg`];
+export const cardAttackIcon = (palette: CardPalette, icon: AttackIcon) => cardArt(palette, `icon-${icon}`) ?? cardArt(palette, 'icon-sparkle');

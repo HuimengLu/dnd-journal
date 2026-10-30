@@ -53,7 +53,7 @@ export function PageTabs({ pages, active, role, onSelect }: Props) {
       <button
         type="button"
         className={`tab${active === OVERVIEW_ID ? ' tab--active' : ''}`}
-        style={{ ['--tab' as string]: '#F7F2E7' }}
+        style={{ ['--tab' as string]: '#E8E3D6' }}
         onClick={() => onSelect(OVERVIEW_ID)}
         aria-current={active === OVERVIEW_ID ? 'page' : undefined}
       >
